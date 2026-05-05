@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -33,7 +33,8 @@ export class ProjetDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private api: ApiService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -52,11 +53,9 @@ export class ProjetDetailComponent implements OnInit {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.api.getProjet(id).subscribe({
       next: (res) => {
-        console.log('API Response:', res);
         this.projet = res.projet;
         this.taches = res.taches || [];
-        console.log('Projet:', this.projet);
-        console.log('Taches:', this.taches);
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('API Error:', err);

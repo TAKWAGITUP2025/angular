@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -25,7 +25,7 @@ export class ProjetDashboardComponent implements OnInit {
 
   statutOptions = ['en attente', 'en cours', 'termine'];
 
-  constructor(private fb: FormBuilder, private api: ApiService) {}
+  constructor(private fb: FormBuilder, private api: ApiService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.formValue = this.fb.group({
@@ -42,6 +42,7 @@ export class ProjetDashboardComponent implements OnInit {
   getAllProjets(): void {
     this.api.getAllProjets(this.searchTerm, this.filtreStatut).subscribe((res) => {
       this.projetsData = res;
+      this.cdr.detectChanges();
     });
   }
 
