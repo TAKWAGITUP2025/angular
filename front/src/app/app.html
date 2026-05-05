@@ -1,0 +1,17 @@
+<nav class="navbar navbar-dark bg-dark mb-3">
+  <div class="container-fluid">
+    <a class="navbar-brand" routerLink="/projets"><i class="bi bi-kanban me-2"></i>Gestion Projets</a>
+    @if (auth.isLoggedIn()) {
+      <div class="d-flex align-items-center">
+        <a class="btn btn-outline-light me-2" routerLink="/projets" routerLinkActive="active">Projets</a>
+        <span class="text-white me-3 small">{{ auth.getUser()?.username }} ({{ auth.getUser()?.role }})</span>
+        <button class="btn btn-outline-danger btn-sm" (click)="logout()">Deconnexion</button>
+      </div>
+    } @else {
+      <a class="btn btn-outline-light btn-sm" routerLink="/login">Connexion</a>
+    }
+  </div>
+</nav>
+<div class="container-fluid px-4">
+  <router-outlet></router-outlet>
+</div>

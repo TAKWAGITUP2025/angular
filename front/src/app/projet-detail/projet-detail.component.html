@@ -1,0 +1,186 @@
+@if (projet) {
+  <!-- En-tête projet -->
+  <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+      <a routerLink="/projets" class="text-muted small me-2">
+        <i class="bi bi-arrow-left"></i> Projets
+      </a>
+      <h2 class="mb-1 mt-1">
+        <i class="bi bi-folder2-open me-2"></i>{{ projet.nom }}
+        <span class="badge ms-2 {{ getStatutBadge(projet.statut) }} fs-6">{{ projet.statut }}</span>
+      </h2>
+      @if (projet.description) {
+        <p class="text-muted mb-1">{{ projet.description }}</p>
+      }
+      <small class="text-muted">
+        @if (projet.responsable) { <span class="me-3"><i class="bi bi-person me-1"></i>{{ projet.responsable }}</span> }
+        @if (projet.dateFin) { <span><i class="bi bi-calendar me-1"></i>Fin : {{ projet.dateFin | date:'dd/MM/yyyy' }}</span> }
+      </small>
+    </div>
+    <div class="text-center">
+      <div class="display-6 fw-bold" [class.text-success]="projet.avancement === 100"
+           [class.text-primary]="projet.avancement > 0 && projet.avancement < 100"
+           [class.text-secondary]="projet.avancement === 0">
+        {{ projet.avancement }}%
+      </div>
+      <small class="text-muted">{{ projet.tachesTerminees }}/{{ projet.totalTaches }} tâches</small>
+      <div class="progress mt-1" style="width:120px; height:6px;">
+        <div class="progress-bar bg-success" [style.width]="projet.avancement + '%'"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres + bouton ajouter tâche -->
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex gap-2">
+      <select class="form-select form-select-sm" style="width:auto" [(ngModel)]="filtrePriorite">
+        <option value="">Toutes priorités</option>
+        <option value="basse">Basse</option>
+        <option value="moyenne">Moyenne</option>
+        <option value="haute">Haute</option>
+      </select>
+    </div>
+    <button class="btn btn-dark btn-sm" (click)="clickAddTache()"
+            data-bs-toggle="modal" data-bs-target="#tacheModal">
+      <i class="bi bi-plus-lg me-1"></i>Ajouter une tâche
+    </button>
+  </div>
+
+  <!-- Kanban board -->
+  <div class="row g-3">
+    @for (col of colonnes; track col.statut) {
+      <div class="col-md-4">
+        <div class="card border-0 bg-light h-100">
+          <div class="card-header bg-{{ col.color }} text-white d-flex justify-content-between align-items-center">
+            <span><i class="bi {{ col.icon }} me-2"></i>{{ col.label }}</span>
+            <span class="badge bg-white text-{{ col.color }}">{{ getTachesByStatut(col.statut).length }}</span>
+          </div>
+          <div class="card-body p-2 d-flex flex-column gap-2" style="min-height:300px">
+            @for (t of getTachesByStatut(col.statut); track t._id) {
+              <div class="card border shadow-sm">
+                <div class="card-body p-2">
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <span class="fw-semibold small">{{ t.titre }}</span>
+                    <span class="badge {{ getPrioriteBadge(t.priorite) }} ms-1 text-capitalize small">{{ t.priorite }}</span>
+                  </div>
+                  @if (t.description) {
+                    <p class="text-muted small mb-1">{{ t.description }}</p>
+                  }
+                  @if (t.assigneA) {
+                    <p class="small mb-1"><i class="bi bi-person-fill me-1"></i>{{ t.assigneA }}</p>
+                  }
+                  @if (t.dateLimit) {
+                    <p class="small mb-2 text-muted"><i class="bi bi-calendar2 me-1"></i>{{ t.dateLimit | date:'dd/MM/yyyy' }}</p>
+                  }
+                  <!-- Changement de statut rapide -->
+                  <div class="d-flex gap-1 flex-wrap">
+                    @if (col.statut !== 'a faire') {
+                      <button class="btn btn-outline-secondary btn-sm px-1 py-0"
+                              (click)="changeStatut(t, 'a faire')" title="À faire">
+                        <i class="bi bi-hourglass"></i>
+                      </button>
+                    }
+                    @if (col.statut !== 'en cours') {
+                      <button class="btn btn-outline-primary btn-sm px-1 py-0"
+                              (click)="changeStatut(t, 'en cours')" title="En cours">
+                        <i class="bi bi-play-fill"></i>
+                      </button>
+                    }
+                    @if (col.statut !== 'termine') {
+                      <button class="btn btn-outline-success btn-sm px-1 py-0"
+                              (click)="changeStatut(t, 'termine')" title="Terminé">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    }
+                    <button class="btn btn-outline-dark btn-sm px-1 py-0 ms-auto"
+                            (click)="onEditTache(t)" data-bs-toggle="modal" data-bs-target="#tacheModal" title="Modifier">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm px-1 py-0"
+                            (click)="deleteTache(t)" title="Supprimer">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+            @empty {
+              <div class="text-center text-muted small py-4">
+                <i class="bi bi-inbox d-block mb-1"></i>Aucune tâche
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="text-center py-5">
+    <div class="spinner-border" role="status"></div>
+    <p class="mt-2">Chargement...</p>
+  </div>
+}
+
+<!-- Modal Tâche -->
+<div class="modal fade" id="tacheModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title">{{ showAdd ? 'Nouvelle tâche' : 'Modifier la tâche' }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="tacheForm">
+          <div class="mb-3">
+            <label class="form-label">Titre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="titre" placeholder="Titre de la tâche">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" formControlName="description" rows="2"></textarea>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Statut</label>
+              <select class="form-select" formControlName="statut">
+                <option value="a faire">À faire</option>
+                <option value="en cours">En cours</option>
+                <option value="termine">Terminé</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Priorité</label>
+              <select class="form-select" formControlName="priorite">
+                <option value="basse">Basse</option>
+                <option value="moyenne">Moyenne</option>
+                <option value="haute">Haute</option>
+              </select>
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Date limite</label>
+              <input type="date" class="form-control" formControlName="dateLimit">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Assignée à</label>
+              <input type="text" class="form-control" formControlName="assigneA" placeholder="Nom">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        @if (showAdd) {
+          <button type="button" class="btn btn-dark" (click)="postTache()">
+            <i class="bi bi-plus-lg me-1"></i>Créer
+          </button>
+        } @else {
+          <button type="button" class="btn btn-primary" (click)="updateTache()">
+            <i class="bi bi-save me-1"></i>Enregistrer
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>
